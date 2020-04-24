@@ -7,9 +7,34 @@
  */
 
 $( document ).ready( function() {
+	isPhpFcgi();
 	$( '#ini_set_form' ).find( 'input[type=submit]' ).on( 'click', iniSetForm );
 	$( '#test_gateway_timeout' ).find( 'input[type=submit]' ).on( 'click', gatewayTimeout );
 } );
+
+function isPhpFcgi() {
+	$.ajax( {
+		type: "POST",
+		url: "/timeout.php",
+		data: {
+			'test': 'is_php_fcgi',
+			'ajax': 'true',
+		},
+		success: function( result ) {
+			console.log( 'PHP SAPI: ' . result );
+			if ( ! result.includes( 'fcgi' ) ) {
+				console.log( 'PHP SAPI is not FCGI' );
+				$( '#test_gateway_timeout').find('input[type=submit]').attr( 'disabled', true );
+				$( '#test_gateway_timeout').find('p').html( 'This test is only available on FCGI php handlers.' );
+			} else {
+				console.log( 'PHP SAPI is FCGI' );
+			}
+		},
+		error: function( error ) {
+			console.log( error );
+		},
+	} );
+}
 
 function iniSetForm( event ) {
 	console.log( 'Start Timeout Test');

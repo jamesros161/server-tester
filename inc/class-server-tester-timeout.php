@@ -55,6 +55,8 @@ class Server_Tester_Timeout {
 				return $this->test_ini_set();
 			case 'gateway_timeout':
 				return $this->test_gateway_timeout();
+			case 'is_php_fcgi':
+				return php_sapi_name();
 			default:
 				return false;
 		}
