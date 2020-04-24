@@ -88,9 +88,5 @@ class Server_Tester_Partials {
 				</p>
 			</div>
 		';
-
-		$this->header = include BASEDIR . '/templates/header.php';
-		$this->footer = include BASEDIR . '/templates/footer.php';
-		$this->home   = include BASEDIR . '/templates/home.php';
 	}
 }

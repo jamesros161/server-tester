@@ -43,6 +43,7 @@ class Server_Tester_Timeout {
 	 * @since 0.1
 	 */
 	public function run_test() {
+		error_log( $_POST );
 		$test = isset( $this->tester->form_post['test'] ) ? $this->tester->form_post['test'] : false;
 		if ( false === $test ) {
 			return $test;

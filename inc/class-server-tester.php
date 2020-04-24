@@ -2,17 +2,10 @@
 /**
  * File: server-tester.php
  *
- * phpcs:disable WordPress
- * phpcs:disable WordPress
- *
  * @since 0.1
  *
  * @package server_tester
  */
-
-// Load Classes.
-require_once BASEDIR . '/inc/class-server-tester-timeout.php';
-require_once BASEDIR . '/inc/class-server-tester-partials.php';
 
 /**
  * Class: Server_Tester.
@@ -74,9 +67,69 @@ class Server_Tester {
 	 * @since 0.1
 	 */
 	public function __construct() {
+		// Sets PHP Superglobals to class properties.
 		$this->set_global_props();
+
+		// Loads and instantiates classes.
+		$this->load_classes();
+
+		// Register Hooks.
+		$this->register_hooks();
+	}
+
+	/**
+	 * Load Classes.
+	 *
+	 * @since 0.1
+	 */
+	public function load_classes() {
+		// Require Class Files.
+		require_once ST_BASEDIR . '/inc/class-server-tester-timeout.php';
+		require_once ST_BASEDIR . '/inc/class-server-tester-partials.php';
+		require_once ST_BASEDIR . '/inc/class-server-tester-pages.php';
+
+		// Instantiate Classes.
 		$this->timeout  = new Server_Tester_Timeout( $this );
 		$this->partials = new Server_Tester_Partials( $this );
+		$this->pages    = new Server_Tester_Pages( $this );
+	}
+
+	/**
+	 * Register Hooks.
+	 *
+	 * @since 0.1
+	 */
+	public function register_hooks() {
+		add_action( 'admin_menu', array( $this, 'add_submenu_page' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
+		add_action( 'wp_ajax_timeout_test', array( $this->timeout, 'run_test' ) );
+	}
+
+	/**
+	 * Enqueue Scripts.
+	 *
+	 * @since 0.1
+	 */
+	public function enqueue_scripts( $hook ) {
+		if ( false !== strpos( $hook, 'server-tester' ) ) {
+			wp_enqueue_script( 'server_tester_admin_script', ST_BASEURL . '/assets/js/main.js', array( 'jquery' ), ST_VERSION, true );
+		}
+
+	}
+
+	/**
+	 * Register Admin Page.
+	 *
+	 * @since 0.1
+	 */
+	public function add_submenu_page() {
+		add_management_page(
+			'Server Tester',
+			'Server Tester',
+			'manage_options',
+			'server-tester-page',
+			array( $this->pages, 'main_admin' )
+		);
 	}
 
 	/**

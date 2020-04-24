@@ -4,18 +4,13 @@
  *
  * Handles Timeout Submissions.
  *
- * phpcs:disable WordPress
- * phpcs:disable WordPress
- *
  * @since 0.1
  *
  * @package server_tester
  */
 
-define( 'BASEDIR', dirname( __FILE__ ) );
-
 // Require Main File.
-require_once BASEDIR . '/inc/class-server-tester.php';
+require_once ST_BASEDIR . '/inc/class-server-tester.php';
 $tester            = new Server_Tester();
 $referrer_is_valid = $tester->is_valid_referrer();
 $result            = '';
