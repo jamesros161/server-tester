@@ -1,0 +1,16 @@
+/**
+ * File: Style.css
+ *
+ * @since 0.1
+ *
+ * @package server_tester
+ */
+
+ div {
+	margin: 5px;
+	padding: 5px;
+ }
+
+ .spinner {
+	display: none;
+ }
