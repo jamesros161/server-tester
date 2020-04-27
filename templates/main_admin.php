@@ -46,5 +46,5 @@ return '
 					<span class="results"></span>
 				</p>
 			</form>
-		</div>' . $this->debug_container .
-	'</div>';
+		</div>
+	</div>';
