@@ -2,9 +2,6 @@
 /**
  * File: class-server-tester-timeout.php
  *
- * phpcs:disable WordPress
- * phpcs:disable WordPress
- *
  * @since 0.1
  *
  * @package server_tester
@@ -43,31 +40,35 @@ class Server_Tester_Timeout {
 	 * @since 0.1
 	 */
 	public function run_test() {
-		$test = isset( $this->tester->form_post['test'] ) ? $this->tester->form_post['test'] : false;
+		$form_data = $this->tester->validate_post_data( 'timeout_test' );
+		$test      = isset( $form_data['test'] ) ? $form_data['test'] : false;
 		if ( false === $test ) {
-			return $test;
+			wp_die();
 		}
-		error_log( $test );
 		switch ( $test ) {
 			case 'php_timeout':
 				return $this->test_php_timeout();
 			case 'ini_set_timeout':
-				return $this->test_ini_set();
+				echo $this->test_ini_set();//phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				break;
 			case 'gateway_timeout':
-				return $this->test_gateway_timeout();
+				echo $this->test_gateway_timeout();//phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				break;
 			default:
 				return false;
 		}
+		wp_die();
 	}
 
 	/**
 	 * Test PHP Timeout.
 	 *
 	 * @since 0.1
+	 *
+	 * @param integer $test_duration Duration of test.
 	 */
-	public function test_php_timeout() {
+	public function test_php_timeout( $test_duration = 90 ) {
 		$start_time = date_create();
-		$time       = 0;
 
 		register_shutdown_function(
 			function() {
@@ -75,25 +76,20 @@ class Server_Tester_Timeout {
 			}
 		);
 
-		error_log( 'Started Testing Max Execution Time:' );
+		$time = 0;
+		for ( ;; ) {
+			$current_time = microtime( true );
+			$duration     = microtime( true ) - $_SERVER['REQUEST_TIME_FLOAT'];
+			$seconds      = (int) ceil( $duration );
 
-		$default_timeout = 90;
-		$timeout         = isset( $this->tester->form_post['time'] ) ? $this->tester->form_post['time'] : $default_timeout;
-
-		for (;;) {
-			$current_time = date_create();
-			$duration     = date_diff( $current_time, $start_time );
-			$seconds      = $duration->s;
 			if ( $seconds > $time ) {
 				$time = $seconds;
 			}
 
-			if ( $time == (int) $timeout ) {
-				return 'Result: A script executing for ' . $timeout . ' seconds did not timeout.';
+			if ( $seconds === (int) $test_duration ) {
+				return 'Result: A script executing for ' . $test_duration . ' seconds did not timeout.';
 			}
 		}
-
-		return error_get_last()['message'];
 	}
 
 	/**
@@ -102,19 +98,26 @@ class Server_Tester_Timeout {
 	 * @since 0.1
 	 */
 	public function test_ini_set() {
-		$new_execution_timeout = $this->tester->form_post['time'];
-		ini_set( 'max_execution_time', $new_execution_timeout );
-		$new_get = ini_get( 'max_execution_time' );
+		$form_data = $this->tester->validate_post_data( 'timeout_test' );
+		$response  = array();
 
-		$this->tester->form_post['time'] = (int) $new_get - 1;
+		if ( ! is_wp_error( $form_data ) ) {
+			$new_execution_timeout = $form_data['time'];
+			ini_set( 'max_execution_time', $new_execution_timeout ); //phpcs:ignore WordPress.PHP.IniSet.max_execution_time_Blacklisted
+			$new_get = ini_get( 'max_execution_time' );
 
-		$data     = $this->test_php_timeout();
-		$response = array(
-			'result' => $new_get,
-			'data'   => $data,
-		);
+			$test_duration = (int) $new_get - 1;
 
-		return json_encode( $response );
+			$data     = $this->test_php_timeout( $test_duration );
+			$response = array(
+				'result' => $new_get,
+				'data'   => $data,
+			);
+		} else {
+			$response = $form_data;
+		}
+
+		return wp_json_encode( $response );
 	}
 
 	/**
@@ -124,24 +127,34 @@ class Server_Tester_Timeout {
 	 */
 	public function test_gateway_timeout() {
 		$starting_execution_timeout = ini_get( 'max_execution_time' );
-		$start_time = date_create();
-		$time       = 0;
+		$start_time                 = date_create();
+		$post_data                  = $this->tester->validate_post_data( 'timeout_test' );
+		$timeout_limit              = isset( $post_data['time'] ) ? (int) $post_data['time'] : false;
+		$time                       = 0;
 
-		for (;;) {
-			$current_time = date_create();
-			$duration     = date_diff( $current_time, $start_time );
-			$seconds      = $duration->s;
+		for ( ;; ) {
+			$current_time = microtime( true );
+			$duration     = microtime( true ) - $_SERVER['REQUEST_TIME_FLOAT'];
+			$seconds      = (int) ceil( $duration );
+
 			if ( $seconds > $time ) {
 				$time = $seconds;
-				ini_set( 'max_execution_time', (int) $starting_execution_timeout + $time );
+				ini_set( 'max_execution_time', (int) $starting_execution_timeout + $time ); //phpcs:ignore WordPress.PHP.IniSet.max_execution_time_Blacklisted
+			}
+
+			if ( $seconds >= $timeout_limit ) {
+				$response = array(
+					'result' => $time,
+					'data'   => 'The Test ran for ' . $seconds . ' without a gateway timeout. To determine the timeout limit, increase the runtime limit option.',
+				);
+				return wp_json_encode( $response );
 			}
 		}
 
-		$data     = $this->test_php_timeout();
 		$response = array(
 			'result' => $time,
 		);
 
-		return json_encode( $response );
+		return wp_json_encode( $response );
 	}
 }
