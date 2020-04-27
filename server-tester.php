@@ -47,5 +47,9 @@ add_filter( 'server_tester_get_tester', get_tester(), 10, 0 );
  * @return Server_Tester
  */
 function get_tester() {
-	return $tester;
+	if ( ! $tester ) {
+		return new Server_Tester();
+	} else {
+		return $tester;
+	}
 }
