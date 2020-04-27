@@ -2,7 +2,6 @@
 /**
  * File: class-server-tester-pages.php
  *
- *
  * @since 0.1
  *
  * @package server_tester
@@ -29,6 +28,6 @@ class Server_Tester_Pages {
 	 */
 	public static function main_admin() {
 		$page = include ST_BASEDIR . '/templates/main_admin.php';
-		echo $page;
+		echo $page; //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 	}
 }

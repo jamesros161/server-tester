@@ -5,133 +5,135 @@
  *
  * @package server_tester
  */
+
 ( function ( $ ) {
+	/**
+	 * Run This on page load.
+	 *
+	 * @since 0.1
+	 */
 	$( document ).ready( function() {
 		isPhpFcgi();
-		$( '#ini_set_form' ).find( 'input[type=submit]' ).on( 'click', iniSetForm );
-		$( '#test_gateway_timeout' ).find( 'input[type=submit]' ).on( 'click', gatewayTimeout );
+		$( 'form' ).find( '.button' ).on( 'click', iniSetForm );
 	} );
-
+	/**
+	 * isPhpFcgi
+	 *
+	 * Determines if the current SAPI is FCGI or not.
+	 *
+	 * @since 0.1
+	 */
 	function isPhpFcgi() {
-		$.ajax( {
-			method: "POST",
-			url: ajaxurl,
-			data: {
-				'action' : 'timeout_test',
-				'test'   : 'is_php_fcgi',
-				'ajax'   : 'true',
-			},
-			contentType: 'application/json',
-			dataType: 'json',
-			success: function( result ) {
-				console.log( 'PHP SAPI: ' . result );
-				if ( ! result.includes( 'fcgi' ) ) {
-					console.log( 'PHP SAPI is not FCGI' );
-					$( '#test_gateway_timeout').find('input[type=submit]').attr( 'disabled', true );
-					$( '#test_gateway_timeout').find('p').html( 'This test is only available on FCGI php handlers.' );
-				} else {
-					console.log( 'PHP SAPI is FCGI' );
-				}
-			},
-			error: function( error ) {
-				console.log( error );
-			},
-		} );
+		if ( ! ST.isFcgi ) {
+			console.log( 'PHP SAPI is not FCGI' );
+			$( '#test_gateway_timeout').find('.button').attr( 'disabled', true );
+			$( '#test_gateway_timeout').find('p').html( 'This test is only available on FCGI php handlers.' );
+		} else {
+			console.log( 'PHP SAPI is FCGI' );
+		}
 	}
 
+	/**
+	 * Parse Input Fields
+	 *
+	 * Handles input fields and preps them for Ajax.
+	 *
+	 * @since 0.1
+	 * @param {array} inputs
+	 */
+	function parseInputFields( inputs, postData ) {
+		$( inputs ).each( function() {
+			if ( $( this ).attr( 'type') !== 'submit' ) {
+				var name  = $( this ).attr( 'name' );
+				var value = $( this ).val();
+				postData[ name ] = value;
+			}
+		} );
+
+		return postData;
+	}
+
+	/**
+	 * iniSetForm
+	 *
+	 * Ajax Callback for testing php_ini_set()
+	 *
+	 * @since 0.1
+	 *
+	 * @param {object} event
+	 */
 	function iniSetForm( event ) {
-		console.log( 'Start Timeout Test');
-		var inputs = $( event.currentTarget ).closest( 'form').find( 'input' );
-		var postData = {};
-		$( inputs ).each( function() {
-			if ( $( this ).attr( 'type') !== 'submit' ) {
-				var name  = $( this ).attr( 'name' );
-				var value = $( this ).val();
-				postData[ name ] = value;
-			} else {
-				$( this).attr("disabled", true);
-			}
-		} );
+		var submitButton = event.currentTarget,
+			form         = $( submitButton ).closest( 'form' ),
+			target = {
+				'submitButton'    : submitButton,
+				'form'            : form,
+				'inputs'          : $( form ).find( 'input' ),
+				'spinner'         : $( form ).find( '.spinner' ),
+				'resultContainer' : $( form ).find( '.results' ),
+				'postData'        : {}
+			};
+		startDate = new Date();
+		target.startTime = startDate.getTime();
 
-		spinner = $( '#ini_set_form' ).find( '.spinner' );
-		$( spinner ).show();
+		$( '.button' ).attr( 'disabled', true );
+
+		target.postData = parseInputFields( target.inputs, target.postData );
+
+		$( target.spinner ).addClass( 'is-active');
+		$( target.resultContainer ).html('');
 
 		event.preventDefault();
+
 		$.ajax( {
 			type: "POST",
-			url: "wp-admin/admin-ajax.php",
-			data: postData,
-			success: function( result ) {
-				var result;
-				try {
-					result = $.parseJSON( result );
-					$( spinner ).hide();
-					$( '#ini_set_result' ).html( result.data );
-				}
-				catch(err) {
-					result = $.parseHTML( result );
-					var seconds,
-						messageArray = $( result ).find( 'th' )[0].childNodes[1].data.split(' ');
-					$( messageArray ).each( function(i) {
-						if ( this == 'seconds' ) {
-							seconds = messageArray[ i - 1 ];
-						}
-					} );
-					$( spinner ).hide();
-					$( '#ini_set_result' ).html( 'Max Execution timeout at ' + seconds + ' seconds.' );
-				}
-			},
-			error: function( error ) {
-				$( spinner ).hide();
-				$( '#ini_set_result' ).html( 'Test Failed. See Console Log for details.' );
-				console.log( error );
-			},
-			timeout: ( parseInt( postData.time ) + 10 ) * 1000
+			url: ajaxurl,
+			data: target.postData,
+			target: target,
+			success: ajaxSuccess,
+			error: ajaxError,
+			timeout: ( parseInt( target.postData.time ) + 10 ) * 1000
 		} );
 	}
 
-	function gatewayTimeout( event ) {
-		console.log( 'Start Gateway Timeout Test');
-		event.preventDefault();
+	/**
+	 * ajaxSuccess
+	 *
+	 * Handles Successful Ajax Calls
+	 *
+	 * @since 0.1
+	 *
+	 * @param {object} result          The result to handle.
+	 */
+	function ajaxSuccess( result ) {
+		result = $.parseJSON( result );
+		$( this.target.spinner ).removeClass( 'is-active');
+		$( this.target.resultContainer ).html( result.data );
 
-		var inputs = $( event.currentTarget ).closest( 'form').find( 'input' ),
-			postData = {},
-			startTime,
-			startDate,
-			endTime,
-			endDate;
+		console.log( 'End Timeout Test: Success');
+		$( '.button' ).attr( "disabled", false );
+	}
 
-		$( inputs ).each( function() {
-			if ( $( this ).attr( 'type') !== 'submit' ) {
-				var name  = $( this ).attr( 'name' );
-				var value = $( this ).val();
-				postData[ name ] = value;
-			} else {
-				$( this).attr("disabled", true);
-			}
-		} );
-		startDate = new Date();
-		startTime = startDate.getTime();
+	/**
+	 * Handles Failed Ajax Calls
+	 *
+	 * @since 0.1
+	 *
+	 * @param {object} error          The error to handle.
+	 */
+	function ajaxError( error ) {
+		$( this.target.spinner ).removeClass( 'is-active');
+		$( '.button' ).attr( "disabled", false );
 
-		spinner = $( '#test_gateway_timeout' ).find( '.spinner' );
-		$( spinner ).show();
-
-		$.ajax( {
-			type: "POST",
-			url: "/timeout.php",
-			data: postData,
-			success: function( result ) {
-				endTime = getTime();
-				duration = Math.floor( ( endTime - startTime ) / 1000 );
-				$( spinner ).hide();
-			},
-			error: function( error ) {
-				endDate = new Date();
-				endTime = endDate.getTime();
-				duration = Math.floor( ( endTime - startTime ) / 1000 );
-				$( spinner ).hide();
-				$( '#gateway_test_result' ).html( 'Gateway Timeout occured at ' + duration + ' seconds.' );
-			},
-		} );
+		if ( error.status === 504 ) {
+			endDate = new Date();
+			endTime = endDate.getTime();
+			duration = Math.floor( ( endTime - this.target.startTime ) / 1000 );
+			$( this.target.resultContainer ).html( 'Gateway Timeout occured after ' + duration + ' seconds.' );
+		} else {
+			$( this.target.resultContainer ).html( 'Test Failed. See Console Log for details.' );
+			console.log( 'End Timeout Test: Failed');
+			console.log( error );
+		}
 	}
 } ( jQuery ) );
