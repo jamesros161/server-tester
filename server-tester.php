@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Server Tester
  * Plugin URI: https://gitbub/jamesros161/server-tester
- * Version: 0.1
+ * Version: 0.1.1
  * Author: BoldGrid <support@boldgrid.com>
  * Author URI: https://www.boldgrid.com/
  * Description: Debug tool for testing server issues
