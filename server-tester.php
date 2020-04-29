@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Server Tester
  * Plugin URI: https://gitbub/jamesros161/server-tester
- * Version: 0.1
+ * Version: 0.1.1
  * Author: BoldGrid <support@boldgrid.com>
  * Author URI: https://www.boldgrid.com/
  * Description: Debug tool for testing server issues
@@ -37,7 +37,7 @@ require_once ST_BASEDIR . '/inc/class-server-tester.php';
 
 $tester = new Server_Tester();
 
-add_filter( 'server_tester_get_tester', get_tester(), 10, 0 );
+add_filter( 'server_tester_get_tester', 'get_tester', 10, 0 );
 
 /**
  * Get Tester.
@@ -47,5 +47,9 @@ add_filter( 'server_tester_get_tester', get_tester(), 10, 0 );
  * @return Server_Tester
  */
 function get_tester() {
-	return $tester;
+	if ( ! isset( $tester ) ) {
+		$tester = new Server_Tester();
+	} else {
+		return $tester;
+	}
 }

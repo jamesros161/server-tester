@@ -125,13 +125,17 @@
 		$( this.target.spinner ).removeClass( 'is-active');
 		$( '.button' ).attr( "disabled", false );
 
+		endDate = new Date();
+		endTime = endDate.getTime();
+		duration = Math.floor( ( endTime - this.target.startTime ) / 1000 );
+
 		if ( error.status === 504 ) {
+			$( this.target.resultContainer ).html( 'Gateway Timeout occured after ' + duration + ' seconds.' );
+		} else {
 			endDate = new Date();
 			endTime = endDate.getTime();
 			duration = Math.floor( ( endTime - this.target.startTime ) / 1000 );
-			$( this.target.resultContainer ).html( 'Gateway Timeout occured after ' + duration + ' seconds.' );
-		} else {
-			$( this.target.resultContainer ).html( 'Test Failed. See Console Log for details.' );
+			$( this.target.resultContainer ).html( 'Test Failed after ' + duration + ' seconds. See Console Log for details.' );
 			console.log( 'End Timeout Test: Failed');
 			console.log( error );
 		}
