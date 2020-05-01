@@ -88,11 +88,13 @@ class Server_Tester {
 	public function load_classes() {
 		// Require Class Files.
 		require_once ST_BASEDIR . '/inc/class-server-tester-timeout.php';
+		require_once ST_BASEDIR . '/inc/class-server-tester-memory.php';
 		require_once ST_BASEDIR . '/inc/class-server-tester-partials.php';
 		require_once ST_BASEDIR . '/inc/class-server-tester-pages.php';
 
 		// Instantiate Classes.
 		$this->timeout  = new Server_Tester_Timeout( $this );
+		$this->memory   = new Server_Tester_Memory( $this );
 		$this->partials = new Server_Tester_Partials( $this );
 		$this->pages    = new Server_Tester_Pages( $this );
 	}
@@ -117,6 +119,7 @@ class Server_Tester {
 		add_action( 'admin_menu', array( $this, 'add_submenu_page' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_action( 'wp_ajax_timeout_test', array( $this->timeout, 'run_test' ) );
+		add_action( 'wp_ajax_memory_test', array( $this->memory, 'run_test' ) );
 	}
 
 	/**

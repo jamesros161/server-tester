@@ -46,5 +46,21 @@ return '
 					<span class="results"></span>
 				</p>
 			</form>
+			<form id="test_php_memory" method="POST">
+				<h4 class="test_heading">' . esc_html( 'Test Setting PHP Memory Limit )' ) . '</h4>
+				<input type="hidden" name="action" value="memory_test" />
+				<input type="hidden" name="test" value="ini_set_memory" />
+				<input type="hidden" name="ajax" value="true" />
+				<input type="hidden" name="nonce" value ="' . wp_create_nonce( 'memory_test' ) . '" />
+				<p>
+					<input name="memory" type="number" />
+					<span>' . esc_html( 'Specify the memory limit you wish to test.' ) . '</span>
+				</p>
+				<p style="display:flex">
+					<button class="button">' . esc_html( 'Start Test' ) . '</button>
+					<span class="spinner"></span>
+					<span class="results"></span>
+				</p>
+			</form>
 		</div>
 	</div>';
